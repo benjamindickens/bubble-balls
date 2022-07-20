@@ -1,0 +1,15 @@
+.balls {
+  position: relative;
+  user-select: none;
+  overflow: visible;
+
+  &-unit-example {
+    position: absolute;
+    visibility: hidden;
+  }
+
+  & svg {
+    position: absolute;
+  }
+
+}

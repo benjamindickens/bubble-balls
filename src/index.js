@@ -1,8 +1,4 @@
-import {scaleLinear} from "d3-scale";
-import {select} from "d3-selection";
-import {extent} from "d3-array";
-import {drag} from "d3-drag";
-import {forceSimulation, forceManyBody, forceX, forceY, forceCollide} from "d3-force";
+import * as d3 from "d3";
 import "./scss/index.scss";
 
 export default class {
@@ -197,11 +193,11 @@ export default class {
             const unitValue = this.getOneUnit();
 
             if (options?.radiusParam?.name) {
-                this.radiusParam.extent = await extent(data, (item) => item[options?.radiusParam?.name]);
+                this.radiusParam.extent = await d3.extent(data, (item) => item[options?.radiusParam?.name]);
 
                 this.scaleRadius = this.measurementUnit.name !== "px"
-                    ? await scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min * unitValue, this.radiusParam.max * unitValue])
-                    : await scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min, this.radiusParam.max])
+                    ? await d3.scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min * unitValue, this.radiusParam.max * unitValue])
+                    : await d3.scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min, this.radiusParam.max])
             }
 
             this.formattedData = (this.randomizeData ? this.shuffleData(data) : data).map((item) => {
@@ -371,15 +367,15 @@ export default class {
         }
 
         this.setSimulation = () => {
-            this.simulation = forceSimulation(this.formattedData)
-                .force("charge", forceManyBody().strength(this.forces.charge))
-                .force("x", forceX()
+            this.simulation = d3.forceSimulation(this.formattedData)
+                .force("charge", d3.forceManyBody().strength(this.forces.charge))
+                .force("x", d3.forceX()
                     .x((d) => this.dimensions.xCenter[d.group - 1])
                     .strength(this.forces.x))
-                .force("y", forceY()
+                .force("y", d3.forceY()
                     .y((d) => this.dimensions.yCenter[d.group - 1])
                     .strength(this.forces.y))
-                .force("collision", forceCollide().radius((d) => d.radius * this.forces.collisionMultiplier))
+                .force("collision", d3.forceCollide().radius((d) => d.radius * this.forces.collisionMultiplier))
                 .on("tick", this.tickBalls);
         };
 
@@ -389,15 +385,15 @@ export default class {
         };
 
         this.mouseover = (hovered) => {
-            this.on.mouseover.call(select(hovered));
+            this.on.mouseover.call(d3.select(hovered));
         };
 
         this.mouseout = (hovered) => {
-            this.on.mouseout.call(select(hovered));
+            this.on.mouseout.call(d3.select(hovered));
         };
 
         this.dragStart = (event, d) => {
-            const circle = select(`ball-container-${d.id}`).classed("dragging", true);
+            const circle = d3.select(`ball-container-${d.id}`).classed("dragging", true);
             this.simulation.alphaTarget(0.03).restart();
 
             const dragged = (event, d) => {
@@ -418,7 +414,7 @@ export default class {
         this.initBalls = async () => {
             await this.setSimulation();
 
-            this.svg = select(".balls")
+            this.svg = d3.select(".balls")
                 .append("svg")
                 .attr("height", this.dimensions.height)
                 .attr("width", this.dimensions.width);
@@ -431,7 +427,7 @@ export default class {
                 .attr("class", (d) => `ball-container-${d.id}`);
 
             if (this.draggable) {
-                this.elements.call(drag().on("start", this.dragStart, true));
+                this.elements.call(d3.drag().on("start", this.dragStart, true));
             }
 
             this.balls = this.elements

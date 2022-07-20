@@ -10,11 +10,7 @@ module.exports = {
         libraryTarget: 'umd',
     },
     externals: {
-        'd3-scale': 'commonjs2 scaleLinear',
-        "d3-selection": "commonjs2 select",
-        "d3-array": "commonjs2 extent",
-        "d3-drag": "commonjs2 drag",
-        "d3-force" : ["commonjs2 forceSimulation", "commonjs2 forceManyBody", "commonjs2 forceX", "commonjs2 forceY", "commonjs2 forceCollide"]
+        'd3': 'commonjs2 d3',
     },
     module: {
         rules: [

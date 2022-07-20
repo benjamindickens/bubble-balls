@@ -55,7 +55,8 @@ Here you can add your custom functions.
 ```bash
 on: {
       mouseover: () => { your code ...} || default: null,
-      ouseout: func || default: null,
+      mouseout: func || default: null,
+      afterInit: func || default: null,
     }
 ```
 

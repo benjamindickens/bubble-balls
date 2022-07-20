@@ -70,6 +70,7 @@ export default class {
         this.on = {
             mouseover: options?.on?.mouseover || null,
             mouseout: options?.on?.mouseout || null,
+            afterInit: options?.on?.afterInit?.bind(this) || null
         };
         this.detectMobile = () => {
             return window.innerWidth < this.breakpoint;
@@ -104,6 +105,7 @@ export default class {
             this.dimensions.rows = Math.round(this.dimensions.amoutOfGroups / this.dimensions.cols);
             this.dimensions.relocationStepY = this.dimensions.height / this.dimensions.rows;
         }
+
 
         this.scaleUpOnResize = async (scaleUp) => {
             if (scaleUp) {
@@ -523,6 +525,8 @@ export default class {
 
         this.afterInit = () => {
             window.onresize = this.debounce(this.resizeBalls, this.debounceDelay);
+
+            this.on.afterInit && this.on.afterInit();
         };
 
         this.start = async () => {

@@ -1,6 +1,6 @@
 {
   "name": "bubble-balls",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This is d3 wrapper which makes the process of creating draggable and divided into groups amazing bubble charts much easier. You can use relative units to scale the bubbles to fit the screen width. Want to rescale the bubbles to fit the container? No problems! The wrapper also supports many build-in style options which you can set up manually to achieve the desired result.",
   "main": "./dist/bubble-balls.js",
   "module": "./dist/bubble-balls.js",

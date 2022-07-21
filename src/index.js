@@ -18,7 +18,7 @@ export default class {
             name: options?.measurementUnit?.name || "px",
             initialRadiusData: [],
         };
-        this.randomizeData = options?.randomizeData === false ? false : true;
+        this.randomizeData = options?.randomizeData || false;
         this.debounceDelay = options?.debounceDelay || 150;
         this.scaleRadius = null;
         this.simulation = null;
@@ -98,11 +98,10 @@ export default class {
         this.getOneUnit = () => this.container.querySelector(".balls-unit-example").offsetWidth;
 
         this.calcDimensions = () => {
-            const current = this.container.getBoundingClientRect();
-            this.dimensions.width = current.width;
-            this.dimensions.height = current.height;
-            this.dimensions.containerArea = Math.round(current.width * current.height);
-            this.dimensions.relocationStepX = current.width / this.dimensions.cols;
+            this.dimensions.width = this.container.offsetWidth;
+            this.dimensions.height = this.container.offsetHeight;
+            this.dimensions.containerArea = Math.round(this.dimensions.width * this.dimensions.height);
+            this.dimensions.relocationStepX = this.dimensions.width / this.dimensions.cols;
         };
 
         this.calcDimensionsY = () => {
@@ -209,11 +208,11 @@ export default class {
 
 
             if (options?.radiusParam?.name) {
-                this.radiusParam.extent = await extent(data, (item) => item[options?.radiusParam?.name]);
+                this.radiusParam.extent = extent(data, (item) => item[options?.radiusParam?.name]);
 
                 this.scaleRadius = this.measurementUnit.name !== "px"
-                    ? await scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min * unitValue, this.radiusParam.max * unitValue])
-                    : await scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min, this.radiusParam.max])
+                    ? scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min * unitValue, this.radiusParam.max * unitValue])
+                    : scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min, this.radiusParam.max])
             }
 
             this.formattedData = (this.randomizeData ? this.shuffleData(data) : data).map((item) => {
@@ -408,8 +407,8 @@ export default class {
             this.on.mouseout.call(select(hovered));
         };
 
-        this.dragStart = (event, d) => {
-            const circle = select(`ball-container-${this.appIndex}-${d.id}`).classed("dragging", true);
+        this.dragStart = (event) => {
+            const circle = select(event.sourceEvent.target).classed("dragging", true);
             this.simulation.alphaTarget(0.03).restart();
 
             const dragged = (event, d) => {
@@ -436,11 +435,10 @@ export default class {
                 .attr("width", this.dimensions.width);
 
             this.elements = this.svg
-                .selectAll(".ball")
+                .selectAll("ball")
                 .data(this.formattedData)
                 .enter()
-                .append("g")
-                .attr("class", (d) => `ball-container-${this.appIndex}-${d.id}`);
+                .append("g");
 
             if (this.draggable) {
                 this.elements.call(drag().on("start", this.dragStart, true));
@@ -449,7 +447,7 @@ export default class {
             this.balls = this.elements
                 .append("circle")
                 .classed("ball", true)
-                .attr("id", (d) => d.id)
+                .attr("id", (d) => `ball-${this.appIndex}-${d.id}`)
                 .attr("r", (d) => d.radius)
                 .attr("stroke", (d) => d.borderColor || this.defaultStyles.borderColor)
                 .attr("stroke-width", (d) => d.borderWidth || this.defaultStyles.borderWidth)

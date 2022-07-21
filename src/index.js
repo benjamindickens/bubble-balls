@@ -5,9 +5,13 @@ import {drag} from "d3-drag";
 import {forceSimulation, forceManyBody, forceX, forceY, forceCollide} from "d3-force";
 import "./scss/index.scss";
 
+let currentIndex = 1;
+
 export default class {
     constructor(container, data, options) {
         this.container = typeof container === "string" ? document.querySelector(container) : container;
+        this.appIndex = currentIndex;
+        currentIndex++;
         this.data = data;
         this.formattedData = null;
         this.measurementUnit = {
@@ -405,7 +409,7 @@ export default class {
         };
 
         this.dragStart = (event, d) => {
-            const circle = select(`ball-container-${d.id}`).classed("dragging", true);
+            const circle = select(`ball-container-${this.appIndex}-${d.id}`).classed("dragging", true);
             this.simulation.alphaTarget(0.03).restart();
 
             const dragged = (event, d) => {
@@ -426,7 +430,7 @@ export default class {
         this.initBalls = async () => {
             await this.setSimulation();
 
-            this.svg = select(".balls")
+            this.svg = select(this.container)
                 .append("svg")
                 .attr("height", this.dimensions.height)
                 .attr("width", this.dimensions.width);
@@ -436,7 +440,7 @@ export default class {
                 .data(this.formattedData)
                 .enter()
                 .append("g")
-                .attr("class", (d) => `ball-container-${d.id}`);
+                .attr("class", (d) => `ball-container-${this.appIndex}-${d.id}`);
 
             if (this.draggable) {
                 this.elements.call(drag().on("start", this.dragStart, true));
@@ -449,7 +453,7 @@ export default class {
                 .attr("r", (d) => d.radius)
                 .attr("stroke", (d) => d.borderColor || this.defaultStyles.borderColor)
                 .attr("stroke-width", (d) => d.borderWidth || this.defaultStyles.borderWidth)
-                .attr("fill", (d) => (d[this.imgPropertyName] ? `url(#img-${d.id})` : d.background || this.defaultStyles.background))
+                .attr("fill", (d) => (d[this.imgPropertyName] ? `url(#img-${this.appIndex}-${d.id})` : d.background || this.defaultStyles.background))
                 .on("mouseover", (event) => {
                     if (this.on.mouseover) {
                         this.mouseover(event.target);
@@ -489,7 +493,7 @@ export default class {
                 .data(this.formattedData.filter((item) => item[this.imgPropertyName]))
                 .enter()
                 .append("pattern")
-                .attr("id", (d) => `img-${d.id}`)
+                .attr("id", (d) => `img-${this.appIndex}-${d.id}`)
                 .attr("width", 1)
                 .attr("height", 1)
                 .attr("patternUnits", "objectBoundingBox")
@@ -545,4 +549,5 @@ export default class {
 
         this.start();
     }
+
 }

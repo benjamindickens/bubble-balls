@@ -136,7 +136,7 @@ export default class {
 
         this.onDeviceChange = (data, unitValue) => {
             const currentScreen = this.detectMobile();
-            if (this.isMobile !== currentScreen && this.measurementUnit.name !== "px") {
+            if (this.isMobile !== currentScreen) {
                 this.isMobile = currentScreen;
                 this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData];
                 data.forEach((item, index) => item.radius = this.measurementUnit.optimizedRadiusData[index] * unitValue)
@@ -158,9 +158,12 @@ export default class {
         }
 
         this.optimizeSize = async (data) => {
-            const unitValue = this.getOneUnit();
+            let unitValue = null;
 
-            await this.onDeviceChange(data);
+            if (this.measurementUnit.name !== "px") {
+                unitValue = this.getOneUnit();
+                await this.onDeviceChange(data);
+            }
 
             this.dimensions.ballsArea = Math.round(data.reduce((prev, cur) => prev + 3.14 * cur.radius ** 2 * 2, 0));
             const isScaleUp = this.dimensions.lastWidth < this.dimensions.width;
@@ -194,7 +197,12 @@ export default class {
         };
 
         this.getFormattedData = async (data) => {
-            const unitValue = this.getOneUnit();
+            let unitValue = null;
+
+            if (this.measurementUnit.name !== "px") {
+                unitValue = this.getOneUnit();
+            }
+
 
             if (options?.radiusParam?.name) {
                 this.radiusParam.extent = await extent(data, (item) => item[options?.radiusParam?.name]);

@@ -10,7 +10,11 @@ module.exports = {
         libraryTarget: 'umd',
     },
     externals: [
-        /^d3\/.+$/
+        "d3-scale",
+        "d3-selection",
+        "d3-array",
+        "d3-drag",
+        "d3-force"
     ],
     module: {
         rules: [

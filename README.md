@@ -38,6 +38,10 @@ new Balls(".mosaic", options)
 
 ```
 
+###### Notes
+
+Unfortunately right now you can't use absolutely the same data object for different instances on one page.
+
 # Options
 
 ###### measurement units

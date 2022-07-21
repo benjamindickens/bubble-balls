@@ -18,7 +18,7 @@ export default class {
             name: options?.measurementUnit?.name || "px",
             initialRadiusData: [],
         };
-        this.randomizeData = options?.randomizeData === false ? false : true;
+        this.randomizeData = options?.randomizeData || false;
         this.debounceDelay = options?.debounceDelay || 150;
         this.scaleRadius = null;
         this.simulation = null;
@@ -36,8 +36,8 @@ export default class {
         this.defaultStyles = {
             color: options?.defaultStyles?.color === undefined ? "#000000" : options?.defaultStyles?.color,
             background: options?.defaultStyles?.background === undefined ? "#FFFFFF" : options?.defaultStyles?.background,
-            borderColor: options?.defaultStyles?.borderColor === undefined ? "transparent" : options?.defaultStyles?.borderColor,
-            borderWidth: options?.defaultStyles?.borderWidth === undefined ? 0 : options?.defaultStyles?.borderWidth
+            borderColor: options?.defaultStyles?.borderColor === undefined ? "#000000" : options?.defaultStyles?.borderColor,
+            borderWidth: options?.defaultStyles?.borderWidth === undefined ? 2 : options?.defaultStyles?.borderWidth
         }
         this.dynamicFontSize = {
             init: options?.dynamicFontSize?.init || true,
@@ -449,7 +449,6 @@ export default class {
             this.balls = this.elements
                 .append("circle")
                 .classed("ball", true)
-                .attr("id", (d) => d.id)
                 .attr("r", (d) => d.radius)
                 .attr("stroke", (d) => d.borderColor || this.defaultStyles.borderColor)
                 .attr("stroke-width", (d) => d.borderWidth || this.defaultStyles.borderWidth)
@@ -536,7 +535,7 @@ export default class {
         };
 
         this.afterInit = () => {
-            window.onresize = this.debounce(this.resizeBalls, this.debounceDelay);
+            window.addEventListener("resize", this.debounce(this.resizeBalls, this.debounceDelay));
 
             this.on.afterInit && this.on.afterInit();
         };
@@ -548,6 +547,7 @@ export default class {
         };
 
         this.start();
+
     }
 
 }

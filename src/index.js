@@ -82,11 +82,11 @@ export default class {
 
         this.start();
 
-    }
+    };
 
     detectMobile = () => {
         return window.innerWidth < this.breakpoint;
-    }
+    };
 
     debounce = (func, delay, params) => {
         let timeline = false;
@@ -115,7 +115,7 @@ export default class {
     calcDimensionsY = () => {
         this.dimensions.rows = Math.round(this.dimensions.amoutOfGroups / this.dimensions.cols);
         this.dimensions.relocationStepY = this.dimensions.height / this.dimensions.rows;
-    }
+    };
 
 
     scaleUpOnResize = async (scaleUp) => {
@@ -125,11 +125,11 @@ export default class {
                 await this.optimizeSize(data);
             }
         }
-    }
+    };
 
     recalculateRadius = (item, value, oneUnit) => {
         item.radius = value * oneUnit;
-    }
+    };
 
     optimizeStatic = async (data, isScaleUp) => {
         if (this.dimensions.ballsArea > this.dimensions.containerArea) {
@@ -143,7 +143,7 @@ export default class {
         if (this.dimensions.initialBallsArea) {
             await this.scaleUpOnResize(isScaleUp)
         }
-    }
+    };
 
     onDeviceChange = (data, unitValue) => {
         const currentScreen = this.detectMobile();
@@ -152,7 +152,7 @@ export default class {
             this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData];
             data.forEach((item, index) => item.radius = this.measurementUnit.optimizedRadiusData[index] * unitValue)
         }
-    }
+    };
 
     optimizeRelative = async (data, unitValue) => {
         if (this.dimensions.ballsArea > this.dimensions.containerArea) {
@@ -166,9 +166,9 @@ export default class {
                 this.recalculateRadius(item, this.measurementUnit.optimizedRadiusData[index], unitValue)
             });
         }
-    }
+    };
 
-   optimizeSize = async (data) => {
+    optimizeSize = async (data) => {
         let unitValue = null;
 
         if (this.measurementUnit.name !== "px") {
@@ -332,10 +332,13 @@ export default class {
     };
 
     tickBalls = () => {
+
+        const currentPadding = this.measurementUnit.name === "px" ? this.dimensions.padding : this.dimensions.padding * this.getOneUnit();
+
         this.balls
             .attr("r", (d) => d.radius)
             .attr("cx", (d) => {
-                const extraSize = d.radius + this.dimensions.padding;
+                const extraSize = d.radius + currentPadding;
                 if (d.x + extraSize > this.dimensions.width) {
                     d.x = this.dimensions.width - extraSize;
                     return d.x;
@@ -347,7 +350,7 @@ export default class {
                 }
             })
             .attr("cy", (d) => {
-                const extraSize = d.radius + this.dimensions.padding;
+                const extraSize = d.radius + currentPadding;
                 if (d.y + extraSize > this.dimensions.height) {
                     d.y = this.dimensions.height - extraSize;
                     return d.y;
@@ -387,7 +390,7 @@ export default class {
 
             return (result < min ? min : result) + this.measurementUnit.name;
         }
-    }
+    };
 
     setSimulation = () => {
         this.simulation = forceSimulation(this.formattedData)

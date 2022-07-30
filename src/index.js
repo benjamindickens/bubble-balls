@@ -59,7 +59,7 @@ export default class {
         this.forces = {
             y: this.options?.forces?.y || 0.05,
             x: this.options?.forces?.x || 0.05,
-            collisionMultiplier: this.options?.forces?.collisionMultiplier || 1.2,
+            collisionMultiplier: this.options?.forces?.collisionMultiplier || 1.3,
             charge: this.options?.forces?.charge || 200,
         };
         this.dimensions = {
@@ -189,7 +189,7 @@ export default class {
             }
         }
 
-        this.dimensions.ballsArea = Math.round(data.reduce((prev, cur) => prev + 3.14 * cur.radius ** 2 * 2, 0));
+        this.dimensions.ballsArea = Math.round(data.reduce((prev, cur) => prev + 3.14 * cur.radius ** 2 * (this.forces.collisionMultiplier * 2), 0));
         const isScaleUp = this.dimensions.lastWidth < this.dimensions.width;
         this.dimensions.lastWidth = this.dimensions.width;
 

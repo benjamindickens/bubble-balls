@@ -20,7 +20,7 @@ export default class {
             initialRadiusData: [],
         };
         this.randomizeData = this.options?.randomizeData || false;
-        this.debounceDelay = this.options?.debounceDelay || 150;
+        this.debounceDelay = this.options?.debounceDelay || 100;
         this.scaleRadius = null;
         this.simulation = null;
         this.balls = null;
@@ -66,6 +66,7 @@ export default class {
             ballsArea: null,
             relocationStepX: null,
             initialBallsArea: null,
+            optimizeRelativeScaleDown: false,
             padding: this.options?.dimensions?.padding || this.measurementUnit.name === "px" ? 10 : 1,
             defaultRadius: this.options?.dimensions?.defaultRadius || this.measurementUnit.name === "px" ? 60 : 6,
             cols: this.options?.dimensions?.cols || 1,
@@ -80,7 +81,7 @@ export default class {
 
         this.isMobile = this.detectMobile();
 
-        this.start();
+        this.start()
 
     };
 
@@ -118,11 +119,11 @@ export default class {
     };
 
 
-    scaleUpOnResize = async (scaleUp) => {
+    scaleUpOnResize = (scaleUp, data) => {
         if (scaleUp) {
             if (this.dimensions.ballsArea < this.dimensions.containerArea && (this.dimensions.initialBallsArea > this.dimensions.ballsArea)) {
                 data.forEach((item) => (item.radius += item.radius * 0.05));
-                await this.optimizeSize(data);
+                this.optimizeSize(data);
             }
         }
     };
@@ -131,36 +132,37 @@ export default class {
         item.radius = value * oneUnit;
     };
 
-    optimizeStatic = async (data, isScaleUp) => {
+    optimizeStatic = (data, isScaleUp) => {
         if (this.dimensions.ballsArea > this.dimensions.containerArea) {
             data.forEach((item) => {
                 item.radius -= item.radius * 0.05
             });
-            await this.optimizeSize(data);
+            this.optimizeSize(data);
         } else if (!this.dimensions.initialBallsArea) {
             this.dimensions.initialBallsArea = this.dimensions.ballsArea;
-        }
-        if (this.dimensions.initialBallsArea) {
-            await this.scaleUpOnResize(isScaleUp)
+        } else {
+            this.scaleUpOnResize(isScaleUp, data)
         }
     };
 
     onDeviceChange = (data, unitValue) => {
-        const currentScreen = this.detectMobile();
-        if (this.isMobile !== currentScreen) {
-            this.isMobile = currentScreen;
-            this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData];
-            data.forEach((item, index) => item.radius = this.measurementUnit.optimizedRadiusData[index] * unitValue)
-        }
+        this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData];
+        data.forEach((item, index) => {
+            item.radius = this.measurementUnit.optimizedRadiusData[index] * unitValue
+        })
     };
 
-    optimizeRelative = async (data, unitValue) => {
+    optimizeRelative = (data, unitValue) => {
+
         if (this.dimensions.ballsArea > this.dimensions.containerArea) {
+            this.optimizeRelativeScaleDown = true;
             data.forEach((item, index) => {
                 item.radius -= item.radius * 0.05
                 this.measurementUnit.optimizedRadiusData[index] = item.radius / 10;
             });
-            await this.optimizeSize(data);
+            this.optimizeSize(data);
+        } else if (this.optimizeRelativeScaleDown) {
+            this.optimizeRelativeScaleDown = false;
         } else {
             data.forEach((item, index) => {
                 this.recalculateRadius(item, this.measurementUnit.optimizedRadiusData[index], unitValue)
@@ -168,12 +170,17 @@ export default class {
         }
     };
 
-    optimizeSize = async (data) => {
+    optimizeSize = (data) => {
         let unitValue = null;
-
+        let relativeReCalcDone = false;
         if (this.measurementUnit.name !== "px") {
             unitValue = this.getOneUnit();
-            await this.onDeviceChange(data);
+            const currentScreen = this.detectMobile();
+            if (this.isMobile !== currentScreen) {
+                this.isMobile = currentScreen;
+                this.onDeviceChange(data, unitValue);
+                relativeReCalcDone = true;
+            }
         }
 
         this.dimensions.ballsArea = Math.round(data.reduce((prev, cur) => prev + 3.14 * cur.radius ** 2 * 2, 0));
@@ -181,9 +188,9 @@ export default class {
         this.dimensions.lastWidth = this.dimensions.width;
 
         if (this.measurementUnit.name === "px") {
-            await this.optimizeStatic(data, isScaleUp)
-        } else {
-            await this.optimizeRelative(data, unitValue)
+            this.optimizeStatic(data, isScaleUp)
+        } else if (relativeReCalcDone === false) {
+            this.optimizeRelative(data, unitValue)
         }
 
     };
@@ -207,7 +214,7 @@ export default class {
         return array;
     };
 
-    getFormattedData = async (data) => {
+    getFormattedData = (data) => {
         let unitValue = null;
 
         if (this.measurementUnit.name !== "px") {
@@ -216,11 +223,11 @@ export default class {
 
 
         if (this.options?.radiusParam?.name) {
-            this.radiusParam.extent = await extent(data, (item) => item[this.options?.radiusParam?.name]);
+            this.radiusParam.extent = extent(data, (item) => item[this.options?.radiusParam?.name]);
 
             this.scaleRadius = this.measurementUnit.name !== "px"
-                ? await scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min * unitValue, this.radiusParam.max * unitValue])
-                : await scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min, this.radiusParam.max])
+                ? scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min * unitValue, this.radiusParam.max * unitValue])
+                : scaleLinear().domain(this.radiusParam.extent).range([this.radiusParam.min, this.radiusParam.max])
         }
 
         this.formattedData = (this.randomizeData ? this.shuffleData(data) : data).map((item) => {
@@ -275,12 +282,12 @@ export default class {
         this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData]
     };
 
-    prepareData = async () => {
-        await this.getFormattedData(this.data);
-        await this.getAmountOfGroups(this.formattedData);
-        await this.calcDimensionsY();
-        await this.setPositionXY();
-        await this.optimizeSize(this.formattedData);
+    prepareData = () => {
+        this.getFormattedData(this.data);
+        this.getAmountOfGroups(this.formattedData);
+        this.calcDimensionsY();
+        this.setPositionXY();
+        this.optimizeSize(this.formattedData);
     };
 
     getPositionX = () => {
@@ -405,9 +412,9 @@ export default class {
             .on("tick", this.tickBalls);
     };
 
-    setPositionXY = async () => {
-        await this.getPositionX();
-        await this.getPositionY();
+    setPositionXY = () => {
+        this.getPositionX();
+        this.getPositionY();
     };
 
     mouseover = (hovered) => {
@@ -437,8 +444,8 @@ export default class {
         event.on("drag", dragged).on("end", ended);
     };
 
-    initBalls = async () => {
-        await this.setSimulation();
+    initBalls = () => {
+        this.setSimulation();
 
         this.svg = select(this.container)
             .append("svg")
@@ -522,10 +529,10 @@ export default class {
             });
     };
 
-    resizeBalls = async () => {
-        await this.calcDimensions();
-        await this.setPositionXY();
-        await this.optimizeSize(this.formattedData)
+    resizeBalls = () => {
+        this.calcDimensions();
+        this.setPositionXY();
+        this.optimizeSize(this.formattedData)
 
         this.svg.attr("height", this.dimensions.height);
         this.svg.attr("width", this.dimensions.width);
@@ -535,13 +542,13 @@ export default class {
         this.setSimulation();
     };
 
-    beforeInit = async () => {
-        await this.calcDimensions();
-        await this.prepareData(this.data);
+    beforeInit = () => {
+        this.calcDimensions();
+        this.prepareData(this.data);
     };
 
-    init = async () => {
-        await this.initBalls();
+    init = () => {
+        this.initBalls();
     };
 
     afterInit = () => {
@@ -550,11 +557,10 @@ export default class {
         this.on.afterInit && this.on.afterInit();
     };
 
-    start = async () => {
-        await this.beforeInit();
-        await this.init();
-        await this.afterInit();
+    start = () => {
+        this.beforeInit();
+        this.init();
+        this.afterInit();
     };
-
 
 }

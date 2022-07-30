@@ -17,7 +17,10 @@ export default class {
         this.formattedData = null;
         this.measurementUnit = {
             name: this.options?.measurementUnit?.name || "px",
-            initialRadiusData: [],
+            initialRadiusData: {
+                desktop: [],
+                mobile: []
+            },
         };
         this.randomizeData = this.options?.randomizeData || false;
         this.debounceDelay = this.options?.debounceDelay || 100;
@@ -79,14 +82,14 @@ export default class {
             afterInit: this.options?.on?.afterInit?.bind(this) || null
         };
 
-        this.isMobile = this.detectMobile();
+        this.currentDevice = this.detectDevice();
 
         this.start()
 
     };
 
-    detectMobile = () => {
-        return window.innerWidth < this.breakpoint;
+    detectDevice = () => {
+        return window.innerWidth < this.breakpoint ? "mobile" : "desktop";
     };
 
     debounce = (func, delay, params) => {
@@ -145,8 +148,11 @@ export default class {
         }
     };
 
-    onDeviceChange = (data, unitValue) => {
-        this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData];
+    onDeviceChange = (data, unitValue, device) => {
+        if (this.measurementUnit.initialRadiusData[device].length === 0) {
+            data.forEach(item => this.measurementUnit.initialRadiusData[device].push((item.radius / 10).toFixed(1)));
+        }
+        this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData[device]];
         data.forEach((item, index) => {
             item.radius = this.measurementUnit.optimizedRadiusData[index] * unitValue
         })
@@ -158,7 +164,7 @@ export default class {
             this.optimizeRelativeScaleDown = true;
             data.forEach((item, index) => {
                 item.radius -= item.radius * 0.05
-                this.measurementUnit.optimizedRadiusData[index] = item.radius / 10;
+                this.measurementUnit.optimizedRadiusData[index] = (item.radius / 10).toFixed(1);
             });
             this.optimizeSize(data);
         } else if (this.optimizeRelativeScaleDown) {
@@ -175,10 +181,10 @@ export default class {
         let relativeReCalcDone = false;
         if (this.measurementUnit.name !== "px") {
             unitValue = this.getOneUnit();
-            const currentScreen = this.detectMobile();
-            if (this.isMobile !== currentScreen) {
-                this.isMobile = currentScreen;
-                this.onDeviceChange(data, unitValue);
+            const currentScreen = this.detectDevice();
+            if (this.currentDevice !== currentScreen) {
+                this.currentDevice = currentScreen;
+                this.onDeviceChange(data, unitValue, currentScreen);
                 relativeReCalcDone = true;
             }
         }
@@ -214,7 +220,7 @@ export default class {
         return array;
     };
 
-    getFormattedData = (data) => {
+    getFormattedData = (data, device) => {
         let unitValue = null;
 
         if (this.measurementUnit.name !== "px") {
@@ -243,9 +249,9 @@ export default class {
 
             if (this.measurementUnit.name !== "px") {
                 if (this.radiusParam.name) {
-                    this.measurementUnit.initialRadiusData.push(item.radius / 10);
+                    this.measurementUnit.initialRadiusData[device].push((item.radius / 10).toFixed(1));
                 } else {
-                    this.measurementUnit.initialRadiusData.push(item.radius);
+                    this.measurementUnit.initialRadiusData[device].push(item.radius);
                     item.radius *= unitValue;
                 }
             }
@@ -279,11 +285,12 @@ export default class {
             return item;
         });
 
-        this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData]
+        this.measurementUnit.optimizedRadiusData = [...this.measurementUnit.initialRadiusData[device]]
     };
 
     prepareData = () => {
-        this.getFormattedData(this.data);
+        const initialDevice = this.detectDevice()
+        this.getFormattedData(this.data, initialDevice);
         this.getAmountOfGroups(this.formattedData);
         this.calcDimensionsY();
         this.setPositionXY();
